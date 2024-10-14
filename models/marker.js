@@ -1,38 +1,38 @@
 // models/marker.js
-
 const mongoose = require('mongoose');
 
-// Define schema for GeoJSON data
+// Define the schema for storing GeoJSON data
 const markerSchema = new mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['FeatureCollection'],
+        enum: ['FeatureCollection'], // Only allows "FeatureCollection" type
     },
     features: [
         {
             type: {
                 type: String,
                 required: true,
-                enum: ['Feature'],
+                enum: ['Feature'], // Only allows "Feature" type
             },
             geometry: {
                 type: {
                     type: String,
                     required: true,
-                    enum: ['Point'], // Can expand for LineString, Polygon, etc.
+                    enum: ['Point'], // Only allows Point geometries
                 },
                 coordinates: {
-                    type: [Number], // [longitude, latitude]
+                    type: [Number], // Longitude and Latitude
                     required: true,
                 },
             },
             properties: {
-                type: Object, // Flexible object for additional properties
+                type: Object, // Additional properties for the marker
+                default: {},
             },
         }
     ]
 });
 
-// Export the Mongoose model
+// Export the model
 module.exports = mongoose.model('Marker', markerSchema);

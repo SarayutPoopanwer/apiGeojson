@@ -8,42 +8,53 @@ const Marker = require('./models/marker');
 // Load environment variables
 dotenv.config();
 
-// Initialize the Express app
+// Initialize Express app
 const app = express();
 
-// Middleware to parse JSON
+// Middleware to parse JSON bodies
 app.use(express.json());
 
-// MongoDB connection
+// Connect to MongoDB Atlas
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
 .then(() => console.log('Connected to MongoDB Atlas'))
 .catch((error) => {
-    console.error('Error connecting to MongoDB:', error);
-    process.exit(1); // Exit if there's a connection error
+    console.error('MongoDB connection error:', error);
+    process.exit(1); // Exit if connection fails
 });
 
-// Define the POST route to handle incoming GeoJSON data
+// Route to add a new marker (POST)
 app.post('/geojson', async (req, res) => {
     try {
-        const markerData = req.body;
+        const geojsonData = req.body;
 
-        // Validate that the incoming data has a 'FeatureCollection' structure
-        if (markerData.type !== 'FeatureCollection') {
+        // Validate GeoJSON structure
+        if (geojsonData.type !== 'FeatureCollection') {
             return res.status(400).json({ message: 'Invalid GeoJSON format. Must be a FeatureCollection' });
         }
 
-        // Save the marker data in the database
-        const marker = new Marker(markerData);
-        await marker.save();
+        // Save the data in MongoDB
+        const newMarker = new Marker(geojsonData);
+        await newMarker.save();
 
-        // Send a success response
-        res.status(201).json({ message: 'Marker data saved successfully' });
+        // Respond with success
+        res.status(201).json({ message: 'GeoJSON data saved successfully', data: newMarker });
     } catch (error) {
-        console.error('Error saving marker data:', error);
-        res.status(500).json({ message: 'Failed to save marker data' });
+        console.error('Error saving GeoJSON:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+// Route to get all markers (GET)
+app.get('/geojson', async (req, res) => {
+    try {
+        const markers = await Marker.find(); // Fetch all markers from MongoDB
+        res.status(200).json({ markers });
+    } catch (error) {
+        console.error('Error fetching GeoJSON:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
     }
 });
 
